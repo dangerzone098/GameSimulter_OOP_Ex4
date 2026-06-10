@@ -29,12 +29,10 @@ public class Avatar extends GameObject {
     private final AnimationRenderable idleAnimation;
     private final AnimationRenderable runAnimation;
     private final AnimationRenderable jumpAnimation;
-    private final AvatarStateFactory stateFactory;
+    private final AvatarControl avatarControl;
 
-    private AvatarState currentState;
     private float energy = MAX_ENERGY;
     private boolean onGround;
-    private boolean usedDoubleJump;
     private Consumer<Float> energyCallback;
 
     public Avatar(Vector2 topLeftCorner, UserInputListener inputListener, ImageReader imageReader) {
@@ -42,13 +40,13 @@ public class Avatar extends GameObject {
                 Vector2.ONES.mult(AVATAR_SIZE),
                 imageReader.readImage(ASSETS_DIRECTORY + "idle_0.png", true));
         this.inputListener = inputListener;
-        stateFactory = new AvatarStateFactory();
+        avatarControl = new AvatarControl(new AvatarStateFactory());
         idleAnimation = createAnimation(imageReader, "idle_", 4);
         runAnimation = createAnimation(imageReader, "run_", 6);
         jumpAnimation = createAnimation(imageReader, "jump_", 4);
         physics().preventIntersectionsFromDirection(Vector2.ZERO);
         transform().setAccelerationY(GRAVITY);
-        changeState(stateFactory.idleState());
+        avatarControl.initialize(this);
     }
 
     @Override
@@ -58,30 +56,26 @@ public class Avatar extends GameObject {
     }
 
     public void handleInput(AvatarInput input, float deltaTime) {
-        updateMovement(input);
-        updateState();
-        currentState.update(this, deltaTime);
-        if (onGround && getVelocity().y() != 0) {
-            onGround = false;
-        }
+        avatarControl.update(this, input, deltaTime);
     }
 
     @Override
     public void onCollisionEnter(GameObject other, Collision collision) {
         super.onCollisionEnter(other, collision);
-        if (getVelocity().y() >= 0) {
-            onGround = true;
-            usedDoubleJump = false;
-            transform().setVelocityY(0);
-        }
+        updateGroundStatus();
     }
 
-    public void changeState(AvatarState nextState) {
-        if (currentState != null) {
-            currentState.exit(this);
+    @Override
+    public void onCollisionStay(GameObject other, Collision collision) {
+        super.onCollisionStay(other, collision);
+        updateGroundStatus();
+    }
+
+    private void updateGroundStatus() {
+        if (getVelocity().y() >= 0) {
+            onGround = true;
+            transform().setVelocityY(0);
         }
-        currentState = nextState;
-        currentState.enter(this);
     }
 
     public boolean trySpendEnergy(float amount) {
@@ -148,57 +142,6 @@ public class Avatar extends GameObject {
                 inputListener.isKeyPressed(KeyEvent.VK_LEFT),
                 inputListener.isKeyPressed(KeyEvent.VK_RIGHT),
                 inputListener.isKeyPressed(KeyEvent.VK_SPACE));
-    }
-
-    private void updateMovement(AvatarInput input) {
-        updateHorizontalMovement(input);
-        updateJumpMovement(input);
-    }
-
-    private void updateHorizontalMovement(AvatarInput input) {
-        if (!input.hasSingleHorizontalDirection()) {
-            stopHorizontalMovement();
-            return;
-        }
-        if (onGround && !hasEnoughEnergy(RUN_ENERGY_COST)) {
-            stopHorizontalMovement();
-            return;
-        }
-        moveHorizontally(input.horizontalDirection());
-    }
-
-    private void updateJumpMovement(AvatarInput input) {
-        if (!input.jump()) {
-            return;
-        }
-        if (onGround && trySpendEnergy(JUMP_ENERGY_COST)) {
-            usedDoubleJump = false;
-            jump();
-            return;
-        }
-        if (!onGround && isFalling() && !usedDoubleJump &&
-                trySpendEnergy(DOUBLE_JUMP_ENERGY_COST)) {
-            usedDoubleJump = true;
-            jump();
-        }
-    }
-
-    private void updateState() {
-        if (!onGround) {
-            changeStateIfNeeded(stateFactory.jumpState());
-            return;
-        }
-        if (getVelocity().x() != 0) {
-            changeStateIfNeeded(stateFactory.runState());
-            return;
-        }
-        changeStateIfNeeded(stateFactory.idleState());
-    }
-
-    private void changeStateIfNeeded(AvatarState nextState) {
-        if (currentState != nextState) {
-            changeState(nextState);
-        }
     }
 
     private AnimationRenderable createAnimation(
