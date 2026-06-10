@@ -7,7 +7,6 @@ import danogl.gui.UserInputListener;
 import danogl.gui.rendering.AnimationRenderable;
 import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
-import pepse.world.trees.Tree;
 
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
@@ -83,7 +82,7 @@ public class Avatar extends GameObject {
     }
 
     private boolean isSolidGround(GameObject other) {
-        return "ground".equals(other.getTag()) || Tree.TRUNK_TAG.equals(other.getTag());
+        return other.physics().directionFromWhichIntersectionsArePrevented() != null;
     }
 
     private void refreshGroundStatus() {

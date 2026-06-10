@@ -70,9 +70,11 @@ Also receives a seed and uses deterministic randomness by x coordinate, so
 the same tree will be created again at the same x value.
 
 Class Tree:
-Creates the GameObjects of one tree. It creates trunk blocks, leaves, and
-fruits. The trunk blocks are solid and have the tag "trunk", so the avatar can
-stand on them like ground. ####how does this work? seems sus
+Creates the WorldObjects of one tree. It creates trunk blocks, leaves, and
+fruits. The trunk is built from Block objects and is added to the static objects layer
+through WorldObject, so it behaves like a solid surface. Since trunk blocks use
+the same solid physics as ground blocks, the avatar can stand on them like ground.
+
 
 Class Leaf:
 Extends GameObject. Leaves do not collide with anything. Each leaf starts
@@ -86,6 +88,17 @@ seconds. The callback is passed from PepseGameManager through Flora and Tree,
 and adds energy to the avatar. Doesn't know the Avatar class internals.
 
 Additional classes:
+Class WorldWindow:
+Handles the infinite world window. It knows which chunks of the
+world are currently close enough to the avatar, and creates and removes chunks
+while the avatar moves. It does not know Terrain or Flora directly. Instead, it
+gets callbacks that create WorldObjects in a given x range.
 
+Class WorldObject:
+A small wrapper class that stores a GameObject together with the layer it should
+be added to. It's for WorldWindow, because when it creates and removes
+chunks it needs to know both the object and its layer. This also lets the objects
+decide their layer when they are created, instead of WorldWindow checking their
+type or tag and choosing for them.
 
 API changes: none.
