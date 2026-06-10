@@ -85,6 +85,7 @@ eats a fruit, the fruit disappears, runs a callback, and then reappears after 30
 seconds. The callback is passed from PepseGameManager through Flora and Tree,
 and adds energy to the avatar. Doesn't know the Avatar class internals.
 
-Additional classes: none.
+Additional classes:
+
 
 API changes: none.

@@ -11,14 +11,13 @@ import danogl.util.Vector2;
 import pepse.world.Block;
 import pepse.world.Sky;
 import pepse.world.Terrain;
+import pepse.world.WorldWindow;
+import pepse.world.WorldObject;
 import pepse.world.avatar.Avatar;
 import pepse.world.avatar.EnergyCounter;
 import pepse.world.trees.Flora;
-import pepse.world.trees.Fruit;
-import pepse.world.trees.Leaf;
-import pepse.world.trees.Tree;
 
-
+import java.util.ArrayList;
 import java.util.List;
 
 public class PepseGameManager extends GameManager {
@@ -26,6 +25,8 @@ public class PepseGameManager extends GameManager {
     private static final float AVATAR_SIZE = 50;
     private static final Vector2 ENERGY_COUNTER_TOP_LEFT = new Vector2(20, 20);
     private static final Vector2 ENERGY_COUNTER_DIMENSIONS = new Vector2(70, 35);
+    private Avatar avatar;
+    private WorldWindow worldWindow;
 
     public static void main(String[] args) {
         new PepseGameManager().run();
@@ -43,22 +44,19 @@ public class PepseGameManager extends GameManager {
         gameObjects().addGameObject(sky, skyLayer);
 
         Terrain t = new Terrain(windowDimensions, SEED);
-        List<Block> tb =  t.createInRange((int) -windowDimensions.x(), (int) (2 * windowDimensions.x()));
-        for (Block b : tb){
-            gameObjects().addGameObject(b, Layer.STATIC_OBJECTS);
-        }
-
         float avatarX = windowDimensions.x() / 2;
         float avatarY = t.groundHeightAt(avatarX) - AVATAR_SIZE;
-        Avatar avatar = new Avatar(new Vector2(avatarX, avatarY), inputListener, imageReader);
+        avatar = new Avatar(new Vector2(avatarX, avatarY), inputListener, imageReader);
         gameObjects().addGameObject(avatar, Layer.DEFAULT);
 
         Flora flora = new Flora(t::groundHeightAt, SEED, () -> avatar.addEnergy(10));
-        List<GameObject> floraObjects =
-                flora.createInRange((int) -windowDimensions.x(), (int) (2 * windowDimensions.x()));
-        for (GameObject floraObject : floraObjects) {
-            gameObjects().addGameObject(floraObject, layerForFloraObject(floraObject));
-        }
+        worldWindow = new WorldWindow(
+                gameObjects(),
+                windowDimensions.x(),
+                List.of(
+                        (minX, maxX) -> createTerrainWorldObjects(t, minX, maxX),
+                        flora::createWorldObjectsInRange));
+        worldWindow.update(avatar.getCenter().x());
 
         EnergyCounter energyCounter =
                 new EnergyCounter(ENERGY_COUNTER_TOP_LEFT, ENERGY_COUNTER_DIMENSIONS);
@@ -69,16 +67,17 @@ public class PepseGameManager extends GameManager {
 
     }
 
-    private int layerForFloraObject(GameObject floraObject) {
-        if (Tree.TRUNK_TAG.equals(floraObject.getTag())) {
-            return Layer.STATIC_OBJECTS;
+    @Override
+    public void update(float deltaTime) {
+        super.update(deltaTime);
+        worldWindow.update(avatar.getCenter().x());
+    }
+
+    private List<WorldObject> createTerrainWorldObjects(Terrain terrain, int minX, int maxX) {
+        List<WorldObject> worldObjects = new ArrayList<>();
+        for (Block block : terrain.createInRange(minX, maxX)) {
+            worldObjects.add(new WorldObject(block, Layer.STATIC_OBJECTS));
         }
-        if (Leaf.TAG.equals(floraObject.getTag())) {
-            return Layer.BACKGROUND;
-        }
-        if (Fruit.TAG.equals(floraObject.getTag())) {
-            return Layer.DEFAULT;
-        }
-        return Layer.DEFAULT;
+        return worldObjects;
     }
 }

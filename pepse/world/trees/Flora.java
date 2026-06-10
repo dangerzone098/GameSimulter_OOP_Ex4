@@ -2,6 +2,7 @@ package pepse.world.trees;
 
 import danogl.GameObject;
 import pepse.world.Block;
+import pepse.world.WorldObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,16 +25,24 @@ public class Flora {
 
     public List<GameObject> createInRange(int minX, int maxX) {
         List<GameObject> floraObjects = new ArrayList<>();
+        for (WorldObject worldObject : createWorldObjectsInRange(minX, maxX)) {
+            floraObjects.add(worldObject.gameObject());
+        }
+        return floraObjects;
+    }
+
+    public List<WorldObject> createWorldObjectsInRange(int minX, int maxX) {
+        List<WorldObject> worldObjects = new ArrayList<>();
         int alignedMinX = alignToBlockGrid(minX);
         int alignedMaxX = alignToBlockGrid(maxX) + Block.SIZE;
         for (int x = alignedMinX; x < alignedMaxX; x += Block.SIZE) {
             Random treeRandom = new Random(Objects.hash(x, seed));
             if (treeRandom.nextDouble() <= TREE_PROBABILITY) {
                 Tree tree = new Tree(x, groundHeightAt.apply((float) x), treeRandom, onFruitEaten);
-                floraObjects.addAll(tree.createGameObjects());
+                worldObjects.addAll(tree.createWorldObjects());
             }
         }
-        return floraObjects;
+        return worldObjects;
     }
 
     private int alignToBlockGrid(int x) {

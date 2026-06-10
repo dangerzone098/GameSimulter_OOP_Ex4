@@ -1,9 +1,11 @@
 package pepse.world.trees;
 
 import danogl.GameObject;
+import danogl.collisions.Layer;
 import danogl.gui.rendering.RectangleRenderable;
 import danogl.util.Vector2;
 import pepse.world.Block;
+import pepse.world.WorldObject;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -38,7 +40,15 @@ public class Tree {
     }
 
     public List<GameObject> createGameObjects() {
-        List<GameObject> treeObjects = new ArrayList<>();
+        List<GameObject> gameObjects = new ArrayList<>();
+        for (WorldObject worldObject : createWorldObjects()) {
+            gameObjects.add(worldObject.gameObject());
+        }
+        return gameObjects;
+    }
+
+    public List<WorldObject> createWorldObjects() {
+        List<WorldObject> treeObjects = new ArrayList<>();
         int trunkHeightInBlocks = MIN_TRUNK_BLOCKS + random.nextInt(TRUNK_HEIGHT_RANGE);
         float treetopY = groundHeight - trunkHeightInBlocks * Block.SIZE;
         addTrunk(treeObjects, trunkHeightInBlocks);
@@ -46,7 +56,7 @@ public class Tree {
         return treeObjects;
     }
 
-    private void addTrunk(List<GameObject> treeObjects, int trunkHeightInBlocks) {
+    private void addTrunk(List<WorldObject> treeObjects, int trunkHeightInBlocks) {
         for (int blockIndex = 1; blockIndex <= trunkHeightInBlocks; blockIndex++) {
             Vector2 topLeftCorner =
                     new Vector2(x, groundHeight - blockIndex * Block.SIZE);
@@ -54,37 +64,39 @@ public class Tree {
                     topLeftCorner,
                     new RectangleRenderable(variedColor(BASE_TRUNK_COLOR)));
             trunkBlock.setTag(TRUNK_TAG);
-            treeObjects.add(trunkBlock);
+            treeObjects.add(new WorldObject(trunkBlock, Layer.STATIC_OBJECTS));
         }
     }
 
-    private void addLeavesAndFruits(List<GameObject> treeObjects, float treetopY) {
+    private void addLeavesAndFruits(List<WorldObject> treeObjects, float treetopY) {
         for (int xOffset = -LEAF_RADIUS; xOffset <= LEAF_RADIUS; xOffset++) {
             for (int yOffset = -LEAF_RADIUS; yOffset <= LEAF_RADIUS; yOffset++) {
                 if (random.nextDouble() <= LEAF_PROBABILITY) {
-                Vector2 leafTopLeft = new Vector2(
-                        x + xOffset * Block.SIZE,
-                        treetopY + yOffset * Block.SIZE);
-                treeObjects.add(new Leaf(
-                        leafTopLeft,
-                        Vector2.ONES.mult(Block.SIZE),
-                        variedColor(BASE_LEAF_COLOR),
-                        random.nextFloat() * MAX_LEAF_DELAY));
-                addFruitIfNeeded(treeObjects, leafTopLeft);
+                    Vector2 leafTopLeft = new Vector2(
+                            x + xOffset * Block.SIZE,
+                            treetopY + yOffset * Block.SIZE);
+                    Leaf leaf = new Leaf(
+                            leafTopLeft,
+                            Vector2.ONES.mult(Block.SIZE),
+                            variedColor(BASE_LEAF_COLOR),
+                            random.nextFloat() * MAX_LEAF_DELAY);
+                    treeObjects.add(new WorldObject(leaf, Layer.BACKGROUND));
+                    addFruitIfNeeded(treeObjects, leafTopLeft);
                 }
             }
         }
     }
 
-    private void addFruitIfNeeded(List<GameObject> treeObjects, Vector2 leafTopLeft) {
+    private void addFruitIfNeeded(List<WorldObject> treeObjects, Vector2 leafTopLeft) {
         if (random.nextDouble() <= FRUIT_PROBABILITY) {    
             Vector2 fruitTopLeft = leafTopLeft.add(
                     Vector2.ONES.mult((Block.SIZE - FRUIT_SIZE) / 2));
-            treeObjects.add(new Fruit(
+            Fruit fruit = new Fruit(
                     fruitTopLeft,
                     FRUIT_SIZE,
                     variedColor(BASE_FRUIT_COLOR),
-                    onFruitEaten));
+                    onFruitEaten);
+            treeObjects.add(new WorldObject(fruit, Layer.DEFAULT));
         }        
     }
 
