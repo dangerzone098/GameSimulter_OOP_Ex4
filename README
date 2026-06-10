@@ -1,0 +1,90 @@
+ptyair, adi.keezl
+215981465, 328097001
+
+Avatar:
+We splitted the avatar implementation between a few classes in the package pepse.world.avatar
+to split to smaller responsibilities.
+
+Class Avatar:
+This holds the real data and actions of the avatar: energy, velocity, jumping, movement,
+collisions. Also reads input and turns it into an AvatarInput object. 
+It doesn't decide the Avatarstate.
+
+Class AvatarInput: 
+Helper that stores left, right, and jump instead of passing input keys.
+
+Interface AvatarState:
+Interface for the avatar states. Each state has shouldEnter,
+enter, update, and exit. shouldEnter tells AvatarControl when this state is the
+correct one (which will make it be/not be the current state).
+enter changes the animation, update handles the behavior of the avatar during that state,
+this means the state could deside how the movement during it works.
+The states don't switch themselfs to other states.
+
+Classes IdleState, RunState, JumpState: 
+IdleState is the default state when the avatar is on the ground and not running.
+It gives the avatar 1 energy each update.
+
+RunState is used when the avatar is on the ground, exactly one horizontal key is
+pressed, and the avatar has enough energy. It moves the avatar horizontally and
+spends 2 energy each update.
+
+JumpState is used when the avatar is not on the ground. It allows horizontal
+movement in the air without spending energy. It also handles double jump. A
+double jump is allowed only while falling, and costs 50 energy.
+
+Class AvatarControl:
+Controls the state changes. It has a list of states ordered by
+priority: jump, run, idle (if we add more states, we can just add them to the list,
+at any priority wanted if it matters to us, also we can add stricked check for idle mode
+if we dont want it as default). Every update it asks the states if they 
+should enter, and changes to the first state that fits (later if the state doesnt change -
+we just update, no exit and enter when not needed).
+
+Class AvatarStateFactory:
+Creates and stores the state objects. AvatarControl receives it and
+uses the same state objects instead of creating new ones every update.
+
+Energy:
+Stored inside Avatar and is between 0 and 100.
+Energy changes only through methods like trySpendEnergy and addEnergy.
+trySpendEnergy checks that there is enough energy before spending it.
+
+The energy display is implemented by EnergyCounter class, (also in the avatar
+package). EnergyCounter is a GameObject in the UI layer. It shows only the energy
+number, we colored it from green to red (its little and relevant only to it so we 
+did the color inside the class).
+
+EnergyCounter does not know Avatar. Instead, PepseGameManager connects them with
+a callback. Avatar calls the callback only when the energy really changes, not every
+update.
+
+Trees:
+We implemented the trees in the package pepse.world.trees.
+
+Class Flora: 
+Creates trees in a given x range. It uses ground height function (instead 
+of receiving Terrain itself). We give it groundHeightAt as callback from terrain, 
+Keeping encapsulation.
+Also receives a seed and uses deterministic randomness by x coordinate, so
+the same tree will be created again at the same x value.
+
+Class Tree:
+Creates the GameObjects of one tree. It creates trunk blocks, leaves, and
+fruits. The trunk blocks are solid and have the tag "trunk", so the avatar can
+stand on them like ground. ####how does this work? seems sus
+
+Class Leaf:
+Extends GameObject. Leaves do not collide with anything. Each leaf starts
+moving after a small random delay using ScheduledTask. Then it uses two
+transitions: one for changing the angle, and one for changing the dimensions.
+
+Class Fruit:
+Extends GameObject. It collides only with the avatar. When the avatar
+eats a fruit, the fruit disappears, runs a callback, and then reappears after 30
+seconds. The callback is passed from PepseGameManager through Flora and Tree,
+and adds energy to the avatar. Doesn't know the Avatar class internals.
+
+Additional classes: none.
+
+API changes: none.
