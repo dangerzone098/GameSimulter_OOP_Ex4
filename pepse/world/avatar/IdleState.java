@@ -15,7 +15,8 @@ public class IdleState implements AvatarState {
     @Override
     public void update(Avatar avatar, AvatarInput input, float deltaTime) {
         avatar.addEnergy(Avatar.IDLE_ENERGY_GAIN);
-        if (input.jump() && avatar.trySpendEnergy(Avatar.JUMP_ENERGY_COST)) {
+        if (avatar.isOnGround() && input.jump() &&
+                avatar.trySpendEnergy(Avatar.JUMP_ENERGY_COST)) {
             avatar.jump();
         }
     }

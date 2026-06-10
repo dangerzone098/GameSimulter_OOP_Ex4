@@ -7,11 +7,13 @@ import danogl.gui.UserInputListener;
 import danogl.gui.rendering.AnimationRenderable;
 import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
+import pepse.world.trees.Tree;
 
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
 
 public class Avatar extends GameObject {
+    public static final String TAG = "avatar";
     public static final float MAX_ENERGY = 100;
     public static final float IDLE_ENERGY_GAIN = 1;
     public static final float RUN_ENERGY_COST = 2;
@@ -44,6 +46,7 @@ public class Avatar extends GameObject {
         idleAnimation = createAnimation(imageReader, "idle_", 4);
         runAnimation = createAnimation(imageReader, "run_", 6);
         jumpAnimation = createAnimation(imageReader, "jump_", 4);
+        setTag(TAG);
         physics().preventIntersectionsFromDirection(Vector2.ZERO);
         transform().setAccelerationY(GRAVITY);
         avatarControl.initialize(this);
@@ -56,25 +59,36 @@ public class Avatar extends GameObject {
     }
 
     public void handleInput(AvatarInput input, float deltaTime) {
+        refreshGroundStatus();
         avatarControl.update(this, input, deltaTime);
     }
 
     @Override
     public void onCollisionEnter(GameObject other, Collision collision) {
         super.onCollisionEnter(other, collision);
-        updateGroundStatus();
+        updateGroundStatus(other);
     }
 
     @Override
     public void onCollisionStay(GameObject other, Collision collision) {
         super.onCollisionStay(other, collision);
-        updateGroundStatus();
+        updateGroundStatus(other);
     }
 
-    private void updateGroundStatus() {
-        if (getVelocity().y() >= 0) {
+    private void updateGroundStatus(GameObject other) {
+        if (isSolidGround(other) && getVelocity().y() >= 0) {
             onGround = true;
             transform().setVelocityY(0);
+        }
+    }
+
+    private boolean isSolidGround(GameObject other) {
+        return "ground".equals(other.getTag()) || Tree.TRUNK_TAG.equals(other.getTag());
+    }
+
+    private void refreshGroundStatus() {
+        if (getVelocity().y() != 0) {
+            onGround = false;
         }
     }
 

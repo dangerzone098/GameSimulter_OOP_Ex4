@@ -1,8 +1,6 @@
 package pepse.world.avatar;
 
 public class JumpState implements AvatarState {
-    private boolean doubleJumpUsed;
-
     @Override
     public boolean shouldEnter(Avatar avatar, AvatarInput input) {
         return !avatar.isOnGround();
@@ -10,7 +8,6 @@ public class JumpState implements AvatarState {
 
     @Override
     public void enter(Avatar avatar) {
-        doubleJumpUsed = false;
         avatar.setJumpAnimation();
     }
 
@@ -21,9 +18,8 @@ public class JumpState implements AvatarState {
         } else {
             avatar.stopHorizontalMovement();
         }
-        if (input.jump() && avatar.isFalling() && !doubleJumpUsed &&
+        if (input.jump() && avatar.isFalling() &&
                 avatar.trySpendEnergy(Avatar.DOUBLE_JUMP_ENERGY_COST)) {
-            doubleJumpUsed = true;
             avatar.jump();
         }
     }
