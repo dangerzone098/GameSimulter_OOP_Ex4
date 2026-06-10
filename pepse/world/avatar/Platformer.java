@@ -1,3 +1,5 @@
+package pepse.world.avatar;
+
 import danogl.*;
 import danogl.collisions.Layer;
 import danogl.components.*;
@@ -36,7 +38,7 @@ public class Platformer extends GameManager {
         placePlatform(Vector2.of(-256, 400), Vector2.of(512, 50));
         placePlatform(Vector2.of(-128, 100), Vector2.of(256, 50));
 
-        var avatar = new Avatar(Vector2.of(0, 900), inputListener);
+        var avatar = new AvatarClone(Vector2.of(0, 900), inputListener);
         setCamera(new Camera(avatar, Vector2.ZERO,
                 windowController.getWindowDimensions(), windowController.getWindowDimensions()));
         gameObjects().addGameObject(avatar);
@@ -54,7 +56,7 @@ public class Platformer extends GameManager {
     }
 }
 
-class Avatar extends GameObject {
+class AvatarClone extends GameObject {
     private static final float VELOCITY_X = 400;
     private static final float VELOCITY_Y = -650;
     private static final float GRAVITY = 600;
@@ -62,7 +64,7 @@ class Avatar extends GameObject {
 
     private UserInputListener inputListener;
 
-    public Avatar(Vector2 pos, UserInputListener inputListener) {
+    public AvatarClone(Vector2 pos, UserInputListener inputListener) {
         super(pos, Vector2.ONES.mult(50), new OvalRenderable(AVATAR_COLOR));
         physics().preventIntersectionsFromDirection(Vector2.ZERO);
         transform().setAccelerationY(GRAVITY);
