@@ -1,4 +1,7 @@
 package pepse.world.avatar;
 
-public class Avatar {
+import danogl.GameObject;
+
+public class Avatar extends GameObject {
+    
 }
